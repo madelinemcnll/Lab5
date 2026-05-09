@@ -83,7 +83,8 @@ begin
     
     w_result <= w_SumtoMux when (i_op = "000" OR i_op = "001") else
                 w_AandB when i_op = "010" else
-                w_AorB;
+                w_AorB when i_op = "011" else
+                "00000000";
                 
     o_flags(3) <= '1' when w_result(3) = '1' else
                   '0';
