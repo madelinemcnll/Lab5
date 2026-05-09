@@ -81,14 +81,14 @@ begin
               Cout  => w_cout
     );
     
-    w_result <= w_SumtoMux when i_op = "000" OR i_op = "001" else
+    w_result <= w_SumtoMux when (i_op = "000" OR i_op = "001") else
                 w_AandB when i_op = "010" else
                 w_AorB;
                 
     o_flags(3) <= '1' when w_result(3) = '1' else
                   '0';
     
-    o_flags(0) <= '1' when w_result = "0000" else
+    o_flags(0) <= '1' when w_result = "00000000" else
                   '0';
                   
     o_flags(2) <= '1' when (w_cout AND (NOT i_op(1))) = '1' else
