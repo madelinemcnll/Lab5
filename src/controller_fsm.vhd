@@ -39,7 +39,19 @@ end controller_fsm;
 
 architecture FSM of controller_fsm is
 
-begin
+	signal f_Q  : std_logic_vector (1 downto 0) := "00";
+	signal f_Q_next : std_logic_vector (1 downto 0) :="00";
 
+begin
+    --Next state logic
+    f_Q_next(0) <= ((NOT f_Q(1)) AND (NOT f_Q(0)) AND i_adv AND (NOT i_reset)) OR ((f_Q(1)) AND (NOT f_Q(0)) AND i_adv AND (NOT i_reset)) ;
+    f_Q_next(1) <= ((NOT f_Q(1)) AND (f_Q(0)) AND i_adv AND (NOT i_reset)) OR ((f_Q(1)) AND (NOT f_Q(0)) AND i_adv AND (NOT i_reset)) ;
+    
+    --Output logic
+    o_cycle(3) <= f_Q(0) AND f_Q(1);
+    o_cycle(2) <= f_Q(0) AND (NOT f_Q(1));
+    o_cycle(1) <= (NOT f_Q(0)) AND f_Q(1);
+    o_cycle(0) <= (NOT f_Q(0)) AND (NOT f_Q(1));
+    
 
 end FSM;
