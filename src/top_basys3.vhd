@@ -29,7 +29,7 @@ entity top_basys3 is
     port(
         -- inputs
         clk     :   in std_logic; -- native 100MHz FPGA clock
-        sw      :   in std_logic_vector(7 downto 0); -- operands and opcode
+        sw      :   in std_logic_vector(15 downto 0); -- operands and opcode
         btnU    :   in std_logic; -- reset
         btnC    :   in std_logic; -- fsm cycle
         btnR    :   in std_logic; -- clock reset
