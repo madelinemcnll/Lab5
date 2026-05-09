@@ -81,9 +81,9 @@ begin
               Cout  => w_cout
     );
     
-    w_result <= w_SumtoMux when i_op = ("00" OR "01") else
-                w_AandB when i_op = "10" else
-                w_AorB when i_op = "11";
+    w_result <= w_SumtoMux when i_op = "000" OR i_op = "001" else
+                w_AandB when i_op = "010" else
+                w_AorB;
                 
     o_flags(3) <= '1' when w_result(3) = '1' else
                   '0';
@@ -94,7 +94,9 @@ begin
     o_flags(2) <= '1' when (w_cout AND (NOT i_op(1))) = '1' else
                   '0';
                   
-    o_flags(1) <= '1' when ((i_A(3) XOR w_SumtoMux(3)) AND (NOT i_op(1)) AND (i_op(0) XNOR i_A(3) XNOR i_B(3))) = '1' else
-                  '0';         
+    o_flags(1) <= '1' when ((i_A(3) XOR w_SumtoMux(3)) AND (NOT i_op(1)) AND (NOT (i_op(0) XOR i_A(3) XOR i_B(3)))) = '1' else
+                  '0';
+                  
+    o_result <= w_result;         
     
 end Behavioral;
