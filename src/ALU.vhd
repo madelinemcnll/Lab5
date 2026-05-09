@@ -89,13 +89,13 @@ begin
     o_flags(3) <= '1' when w_result(3) = '1' else
                   '0';
     
-    o_flags(0) <= '1' when w_result = "00000000" else
+    o_flags(2) <= '1' when w_result = "00000000" else
                   '0';
                   
-    o_flags(2) <= '1' when (w_cout AND (NOT i_op(1))) = '1' else
+    o_flags(1) <= '1' when (w_cout AND (NOT i_op(1))) = '1' else
                   '0';
                   
-    o_flags(1) <= '1' when ((i_A(3) XOR w_SumtoMux(3)) AND (NOT i_op(1)) AND (NOT (i_op(0) XOR i_A(3) XOR i_B(3)))) = '1' else
+    o_flags(0) <= '1' when ((i_A(3) XOR w_SumtoMux(3)) AND (NOT i_op(1)) AND (NOT (i_op(0) XOR i_A(3) XOR i_B(3)))) = '1' else
                   '0';
                   
     o_result <= w_result;         
