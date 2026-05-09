@@ -137,7 +137,6 @@ begin
     led(1) <= w_fsmcycle(1);
     led(0) <= w_fsmcycle(0);
     
-    w_regIN(8) <= sw(8); ---inputs!!!! EDIT***----
     w_regIN(7) <= sw(7);
     w_regIN(6) <= sw(6);
     w_regIN(5) <= sw(5);
