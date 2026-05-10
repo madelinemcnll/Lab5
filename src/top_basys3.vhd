@@ -43,11 +43,11 @@ entity top_basys3 is
     );
 end top_basys3;
 
-architecture top_basys3_arch of top_basys3 is 
+architecture top_basys3_arch of top_basys3 is  
   
 	-- declare components and signals
 	component clock_divider is
-	   generic ( constant k_DIV : natural := 2	);
+	   generic ( k_DIV : natural := 100000000);
 	   port ( 	i_clk    : in std_logic;		   -- basys3 clk
 			    i_reset  : in std_logic;		   -- asynchronous
 			    o_clk    : out std_logic		   -- divided (slow) clock
@@ -57,6 +57,7 @@ architecture top_basys3_arch of top_basys3 is
     component controller_fsm is
         port ( i_reset : in STD_LOGIC;
                i_adv   : in STD_LOGIC;
+               i_clk   : in STD_LOGIC;
                o_cycle : out STD_LOGIC_VECTOR (3 downto 0));
     end component controller_fsm;
     
@@ -98,6 +99,7 @@ architecture top_basys3_arch of top_basys3 is
 	
 	signal w_clkreset : STD_LOGIC;
 	signal w_clk : STD_LOGIC;
+	--signal w_clk_fsm : STD_LOGIC;
 	signal w_fsmcycle : STD_LOGIC_VECTOR (3 downto 0);
 	signal w_regA : STD_LOGIC_VECTOR (7 downto 0);
 	signal w_regB : STD_LOGIC_VECTOR (7 downto 0);
@@ -105,11 +107,17 @@ architecture top_basys3_arch of top_basys3 is
 	signal w_ALUtoMUX : STD_LOGIC_VECTOR (7 downto 0);
 	signal w_MUXtoTC : STD_LOGIC_VECTOR (7 downto 0);
 	signal w_sign : STD_LOGIC;
+	signal w_flag3 : STD_LOGIC;
+	signal w_flag2 : STD_LOGIC;
+	signal w_flag1 : STD_LOGIC;
+	signal w_flag0 : STD_LOGIC;
 	signal w_sign1 : STD_LOGIC_VECTOR (3 downto 0);
 	signal w_hund : STD_LOGIC_VECTOR (3 downto 0);
 	signal w_tens : STD_LOGIC_VECTOR (3 downto 0);
 	signal w_ones : STD_LOGIC_VECTOR (3 downto 0);
 	signal w_TDMtoDec : STD_LOGIC_VECTOR (3 downto 0);
+	signal w_DectoSeg : STD_LOGIC_VECTOR (6 downto 0);
+	signal w_sel : STD_LOGIC_VECTOR (3 downto 0);
 	
 
   
@@ -117,8 +125,16 @@ begin
 	-- PORT MAPS ----------------------------------------
 	w_clkreset <= (btnU or btnR); 
 	
-	clkdiv_inst : clock_divider 		--instantiation of clock_divider to take 
-        generic map ( k_DIV => 12500000) -- 4 Hz clock from 100 MHz
+--	clkdiv_inst : clock_divider 		--instantiation of clock_divider to take 
+--        generic map ( k_DIV => 100000) -- 4 Hz clock from 100 MHz
+--        port map (						  
+--            i_clk   => clk,
+--            i_reset => w_clkreset,
+--            o_clk   => w_clk
+--        );
+    
+  	clkdiv_inst : clock_divider 		--instantiation of clock_divider to take 
+        generic map ( k_DIV => 1000) -- 100k Hz clock from 100 MHz
         port map (						  
             i_clk   => clk,
             i_reset => w_clkreset,
@@ -129,6 +145,7 @@ begin
         port map (
             i_reset => btnU,
             i_adv   => btnC,
+            i_clk   => clk,
             o_cycle => w_fsmcycle
         );
         
@@ -146,23 +163,28 @@ begin
     w_regIN(1) <= sw(1);
     w_regIN(0) <= sw(0);
     
-    register_procA : process (w_fsmcycle(0), btnU)
+    register_procA : process (w_clk, btnU)
     begin
         if btnU = '1' then
             w_regA <= "00000000";        -- reset state
-        elsif (rising_edge(w_fsmcycle(0))) then
-            w_regA <= w_regIN;    -- next state becomes current state
+        elsif (rising_edge(w_clk)) then
+            if  (w_fsmcycle(0) = '1') AND (btnC = '1') then
+                w_regA <= w_regIN;    -- next state becomes current state
+            end if;
         end if;
     end process register_procA;
     
-    register_procB : process (w_fsmcycle(1), btnU)
+    register_procB : process (w_clk, btnU)
     begin
         if btnU = '1' then
             w_regB <= "00000000";        -- reset state
-        elsif (rising_edge(w_fsmcycle(1))) then
-            w_regB <= w_regIN;    -- next state becomes current state
+        elsif (rising_edge(w_clk)) then
+            if  (w_fsmcycle(1) = '1') AND (btnC = '1') then
+                w_regB <= w_regIN;    -- next state becomes current state
+            end if;
         end if;
     end process register_procB;
+    
     
     alu1 : ALU
     port map (
@@ -172,11 +194,18 @@ begin
         i_op(1) => sw(14),
         i_op(0) => sw(13),
         o_result => w_ALUtoMUX,
-        o_flags(3) => led(15),
-        o_flags(2) => led(14),
-        o_flags(1) => led(13),
-        o_flags(0) => led(12)
+        
+        o_flags(3) => w_flag3,
+        o_flags(2) => w_flag2,
+        o_flags(1) => w_flag1,
+        o_flags(0) => w_flag0
     );
+    
+    --only displays flags when cycle is final
+    led(15) <= w_flag3 when (w_fsmcycle = "1000") else '0';
+    led(14) <= w_flag2 when (w_fsmcycle = "1000") else '0';
+    led(13) <= w_flag1 when (w_fsmcycle = "1000") else '0';
+    led(12) <= w_flag0 when (w_fsmcycle = "1000") else '0';
     
     w_MUXtoTC <= w_regA when w_fsmcycle = "0010" else
                  w_regB when w_fsmcycle = "0100" else
@@ -203,31 +232,26 @@ begin
 		        i_D1 		=> w_tens,
 		        i_D0 		=> w_ones,
 		        o_data		=> w_TDMtoDec,
-		        o_sel(3)		=> an(3),	-- selected data line (one-cold)
-		        o_sel(2)		=> an(2),
-		        o_sel(1)		=> an(1),
-		        o_sel(0)		=> an(0)
+		        o_sel		=> w_sel	-- selected data line (one-cold)
     );
     
     decoder : sevenseg_decoder
     port map ( i_Hex => w_TDMtoDec,
-               o_seg_n => seg     
+               o_seg_n => w_DectoSeg     
     );
     
-    
-    
-	
+    an <= w_sel;
 
-	
+    seg <= "1111110" when ((w_sel = "0111") AND (w_sign = '1')) else
+            w_DectoSeg;
+    
+    
 	
 	-- CONCURRENT STATEMENTS ----------------------------
 	
 	
 	-- PROCESSES ----------------------------------------
-	led(0) <= '0';
-	led(1) <= '0';
-	led(2) <= '0';
-	led(3) <= '0';
+
 	led(4) <= '0';
 	led(5) <= '0';
 	led(6) <= '0';
