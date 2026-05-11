@@ -169,7 +169,7 @@ begin
             w_regA <= "00000000";        -- reset state
         elsif (rising_edge(w_clk)) then
             if  (w_fsmcycle(0) = '1') AND (btnC = '1') then
-                w_regA <= w_regIN;    -- next state becomes current state
+                w_regA <= w_regIN;    -- input at the time goes to i_A for ALU
             end if;
         end if;
     end process register_procA;
@@ -202,10 +202,14 @@ begin
     );
     
     --only displays flags when cycle is final
-    led(15) <= w_flag3 when (w_fsmcycle = "1000") else '0';
-    led(14) <= w_flag2 when (w_fsmcycle = "1000") else '0';
-    led(13) <= w_flag1 when (w_fsmcycle = "1000") else '0';
-    led(12) <= w_flag0 when (w_fsmcycle = "1000") else '0';
+    led(15) <= w_flag3 when (w_fsmcycle = "1000") else 
+               '0';
+    led(14) <= w_flag2 when (w_fsmcycle = "1000") else 
+               '0';
+    led(13) <= w_flag1 when (w_fsmcycle = "1000") else 
+               '0';
+    led(12) <= w_flag0 when (w_fsmcycle = "1000") else 
+               '0';
     
     w_MUXtoTC <= w_regA when w_fsmcycle = "0010" else
                  w_regB when w_fsmcycle = "0100" else
@@ -241,16 +245,10 @@ begin
     );
     
     an <= w_sel;
-
+    
+    --displays sign correctly for 7-seg disp
     seg <= "1111110" when ((w_sel = "0111") AND (w_sign = '1')) else
             w_DectoSeg;
-    
-    
-	
-	-- CONCURRENT STATEMENTS ----------------------------
-	
-	
-	-- PROCESSES ----------------------------------------
 
 	led(4) <= '0';
 	led(5) <= '0';
